@@ -1,0 +1,6 @@
+[submodule "MoltenGamepad"]
+	path = MoltenGamepad
+	url = https://github.com/jgeumlek/MoltenGamepad
+[submodule "steamlink-sdk"]
+	path = steamlink-sdk
+	url = https://github.com/ValveSoftware/steamlink-sdk.git
