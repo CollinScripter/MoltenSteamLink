@@ -11,25 +11,40 @@ TOP="${PWD}"
 SRC="${TOP}/MoltenGamepad"
 
 #
-# Patch it
+# Apply patch
 #
 pushd "${SRC}"
 patch -p1 <"${TOP}/moltengamepad.patch" || exit 1
 popd
+
+#
+# Include plugins (TODO: Search MoltenGamepad/source/plugin for files, make sure at least one is selected)
+#
+PLUGINS=$(whiptail --title "Plugins to include" --backtitle MoltenSteamLink --nocancel --checklist \
+"Select included plugins" 20 78 2 \
+"wiimote" "Allow connections from Nintento Wii Remotes" ON \
+"joycon" "Allow connections from Nintento Switch Joycons" OFF \
+3>&1 1>&2 2>&3)
+
 #
 # Build it
 #
 pushd "${SRC}"
-make PLATFORM=STEAMLINK MAKECMDGOALS=release || exit 1
+make PLATFORM=STEAMLINK MAKECMDGOALS=release MG_BUILT_INS="${PLUGINS//"\""/""}" || exit 1
 popd
 
+#
+# Create/Move steamlink files
+#
 export DESTDIR="${TOP}/steamlink/apps/moltengamepad"
 
 mkdir -p "${DESTDIR}"
 chmod +x "${SRC}/moltengamepad"
 cp "${SRC}/moltengamepad" "${DESTDIR}"
 
+#
 # Create the table of contents and icon
+#
 cat >"${DESTDIR}/toc.txt" <<__EOF__
 name=MoltenGamepad
 icon=icon.png
@@ -37,14 +52,101 @@ run=moltengamepad.sh
 __EOF__
 
 base64 -d >"${DESTDIR}/icon.png" <<__EOF__
-
+iVBORw0KGgoAAAANSUhEUgAAAF4AAABeCAIAAAAlsDQ5AAAACXBIWXMAAC4jAAAuIwF4pT92AAAS
+IklEQVR4Xu1c6XPbZnoHQAC8SYCSqMuSJdv1rdhep3bszKSbTbbT7k5nOu30S/tl+4e1n/ph91tn
+tjuz2fU62cZrJ42jWL5i+dRhWaRMkQRv4uwPAkUCL0ASpLWJlRVGk3HA571+eO4HeGjDMKiDywsB
+5gCWbggcQNOVNw6gOYBmcMVxwDUHXHPANYMjcMA1g2PGDj5kz0bU65quGY2Grsi6ohiKogcCNMvS
++G8kam4sGGSCoe9NG/55oZGbeq2mra3USkWlvgNBIS9XK5qq6qpiNJs6/kFTtKYbwEjTDJqh2QBN
+0yb6NENxHMMHGYAVDAUSCTYUDuBOLB4YSwdHxvhEgsOve/agXBPtMTSvs818Xn65Vs/n5FpVy2/L
+gKa5A0qjoYE1cP6di9J1w9ApM0oBEDuxihWytIDZ2SjDmP9rIkVTAYYOsDTPm2BxHB0MBuIJNhZn
+8d/0RHD6UFgc4UdG+T1Ein7zGKpSVh/eK21uNIoF5fVWsySpzYYGIMAUAELXWmfeq1itxVO0KXdg
+KI5nIHdgqKTACil+dJSfmYvMH42IqTeFaXhonjyqvFyvr72obWWb5ZJSKWvQHapiwrFXKPhnAeAF
+pABTOBwIRwKJJDsxGZqYCh2ej5w4Hfc/j51yMGiqFXV9tQ5Q1tdqEJn8ttKoQ0y+Hzi6HbgFE8dE
+ogFB5MbGg/NHo/g7fCQCefQPk19oXm007t+RoETW1+pSQQGDQMVCX/hf6bunBEZQVBxPg5UgX1OH
+QrNzkQvvCgDLz2b6Q/PiWfX2F4XVF7XcaxmGBhrkLUfE89hMAJqbMZkoHTx6PLZwPgE+6g1QL2iW
+vpYe3i89Xa5s5+R6zRSc716J+Hm8/mnARyzLQBmNjvGQrxOn4pffT3UVTE+d+fX/Fe4uStCyW5km
+QIFm9b/8vqDc8SoBUPDQbPjd98TjJ2OwccTOSa6Bil36Rnp0v/R6C76Z+sMDxX5+SFkEHJQOnlmI
+n/uR8FcnY94WCn7q/17PLT8ob7xs1Kqqqv7QOKUbO4ODorHA9Ez42PHYhz8dg+toUba45osb+cWv
+CusrdfivsqzvC6HYw01CB8EnSqX42fnIpavixUsiJme3X8tf3swvLRbhziK62Y/W580xgnmBL2L6
+rmUVzFGW1At/LdD/9Z+r9+6UCn+RzOKJKdxCyNTps3EWPguinh8qs2iaXKlna/J2U61quqJTGmJ7
+BF4hLh7mU/HIJI0A33lBnyASXFrUWamoEN7K8ubvy1rRE9FRfmou/f4bMvDz7Od5JeM5CdzXi4f+
+eScYH/5S1fpm8V6mvpKnSxVWMdqTtf8BAyObf0yZiqlcikqmgzNT4jmWDVurIkOCUJl1e3GPjWdN
+zts8lZuVOeqNoMEzXDLua5z3yWMKkiTD45IvPXsq3d5gCxpjUD4Cb+SKSpxSonIreo7JfTOmxObD
+J6dHLoKVIEZkvqbeLDQDXc12KdAc/mnujLybu6Z137RgODwL/2tJlfW7hc+yfMUPIp7TAiYMz2q3
+w68WjzFHjqU/IKHJV5732JASMOrNfDjY1bnufZit4sNXfKkHjRAYeGbd0O6/+s1T9pXO740jVmf1
+e9TTJ5nnJDTFRobqmfkrVteHgwZJvaXKTaqLKFl4ieFp/5wCymp961bu10UemqPrBRmIqFzE4Fmk
+dChWozSVUmt0s8ZqGt0VzQarkzAU9HzvzUmNzCR1bqADWMTPtz6XOKX3wFRs3v/MxfLqjfJvG7y3
+g5pQuGlmcjJ2UozPu80QVsGj2i493ao+e6lvQOO41yWhkZg6QZRUOPuRJK3gf/dtSkWtPdQeUbYI
+Lq5wZeeGIiqy4n0SBe0Jc8VHf6p/BgF3b2ZUDp2OXUqPn+m9T+A1mjyOv9MUVSg9/1a6tcmVOuYM
+3rB9vKyU6+A42xVSmTFqRKI6trZEV4eA5kHmkybXebysTk/R48vUS/tUgu4XF1iiz+ufaq6MHafR
+F7jzszPvDbpDMXHkauJIofxisfhpgW+ZGsf0+fILkmX0sMCP229WAuC9wRReubb5nHU4MseNw3W9
+RqzlUwfXGrmb5WtuXASZ+1j8p9mxgXFpbwOi99HMv5/SZi0V5ICm0HhFQsOIYuSQ/SZchnLN22Hr
+9qyWtq/BNLavsBo4MfGxRJcJejE02fdpa1rzRu6/oSMJypQc/PHkv0XD6b4z9COgz0z9/Ar3XkB3
+QlPUSB0sBscT0UMBuwhSVLG23m+Bzu+Z/L0M3A3b9Q5/Dl5vmSU1nx8dfGfz126VKcj8B1P/2vZl
+/e+tG+XUyIWfxH/m4Joi4zgDRqaic1BXUJn2WUrN1z6XhxW4W/vSTjwih2bGLkuVNTsfgSCsMkE+
+2XvabOHeC45cGtrw/bF/ZAMhn1vySZaMHe5Ag9ADpt4+ElrNYtEE5XBSJd07wnKv+jT7mf0hQ6rO
+J/8GZPk6yXdJPdJ70wgOb9duEjRQCpejH4RDIz4PPBBZB5p85QWhXZNa61EIrGPtMkNqUM8lZaXy
+rf7Y/tOMnIItwJ2iTD58genjBz/JXIefSix0TJscE04NdGD/xB1oCvUNYphAtzhcCE/Zf6oGkMRQ
++67xIPs72eZ3wGC/k/5ba1SRJsMFMTTRY0K4RY8p0npCBs9O/KzvNoYm6EBTVHMkNLtmW4zN2X8y
+A9aqwyVxL1+qbrxgs/b7MNihoJlYhO13h6m9dfDj7Kd2lK1pz3BnAwEf8fWw2HSgkVy+XCo6a03L
+sZGI4qhFFF0sRmxgKf8Hu6LFcBhsi6ZUeUl4JUGN7hGXQZevOJ1DTALX+fDYlWFP7WtcCxooOWR9
+7CNg2OORjhwljFaax6KRZJLF7GM383eyvMNpXgieCzAtM5d32f6k5pic2Pir7UUPLcMc9YyMfB3a
+H1ELmmJ5hbCmCTVoX1tgLFloXSVD6ja/abDrX9l/tQx2+05Bdgga7hOTEzM/rz8k7kCDzY12JvR3
+0oGpWtAUXNZUgMm2XULQES6UXFFomxampMx2lHTbYLcJJBesYrCrDob7m+PIqC2txHluyKSXf4R2
+oXHpYJF3ON1i9LB9UnA4/CD3MghQvzWe2u+3DXYHmkCDGAjHstuOs8WHmisjOh0cIHfhHwuCcleg
+KFdEE3aETvD9bJGzOUmxsuZe9V72E3uiwG6wLWLkholMAr/rWHqeIVP3yDpOCmeHPrD/gWZSAtqB
+0MHIOidjLfPUniuhhrb5zgOXGpuj1An7SkjQrrAOX+6EMbdrsFuEhcoqsbm2Y+m56bxBet6IWvqG
+FK6pjN+//A+9e07PvfRV8ecmNMXKKpEKjKscw5BZriQd36Zs0LhkcKlw3bD5GabBnvqIWLUgkwnW
+JC30eJLEMwOlYPhN67SnhZPVN8Fo3wM4IxpKmwJVcFtTw+P9N4FzaJ+S4ZDBje2vt3hHAAGDzewa
+7PbCRVf8heC+GzS1+msV23ReSWfU4kdA8lUP2e8xEMlTcIYJTVHZIuhEbtQ9UnDmtMu2wgvihrv1
+RfsQwmB3HmCAVN4pp4K3T1JGDt91RdleXOZ54KLLXegNaHLHOu9A43z+uCOGPDL7QmzW/ghRrmo0
+W4rgcfZ6letlsK2tNJqFBlxJ2wU9jepqt43KXkYwOnipp9jdC/NcWtjhDCgUQ2IdhTdoK6QC3WMg
+HVHVketG4WUiKDRl6RHlsCOmwR43I2ziyldWSOlQ8cZh13KlopNmHsM5dmBdczZxRdO7FmQWa7eq
+zmyMVfNhoaLMMqjtiqpsIOD9jmTSiJSpjh8sNTMT1MK97O9UW3nMbbDbcxcam0SRqx3cez49Fedx
+5cZZZuCQcjTpsKT2tWCdG80b9jsmZ+zUfJiCS0X1qK4mndVFSc0jwljlHPGU22C3Fy66ilyiMyfv
+AsiDoYwBk/a91cqOdXaQ4AUBK6Bn3BFNku2aVSIy2yWqcqf4mT1xvBNhkwa7vbJEkzkwMUJ6T/Zt
+BlwOBH5Fhqz3aQf61W2d284B41ZRqZAjcWVfiUjcSLyc4x0WZyF43m2wrRlwpBrnSLAGdDoR7VXJ
+DQY81IqsDlMI64ZXXnHFumzLOjOSK6KxJM3zghuKNHX7J8Ll2DHYl7qNLbh0cELjeycWokGPpG+5
+Zz5kIJYBcZFy5Rt3fRSGiGhQJOod1CZ079yKO8ImdumRYDUcwb37VKjzuDw+KidvDnr+bvR4y4Ko
++eAU7XwjaQCEfpn95G7CmFhvVh6xUuLdLo8ilzO4dw9E9gshC3F/25VXHhopqUxGSEgetutZLmic
+KSv3qoLXeWCwF9I/7b1FyVXkEiMzfU+VpscIGigsZBH7DvRDkK+RAUTSVnd3QdOvuipGPc7Tw2Bb
+W0RGqhJwFCGQqXMH9+7zzMYX3DeXq9/4OXlfGnzaRtCIgY52I8PrlLN44J4dCeMfKx8S91OJo733
+USivOIvDeL+QxyeDfXcPIRWlYPvtBYs+xzeeZj49NkFuo+9sBIGHDrZxhgOa3pl9a17ztRTh5KCb
+KDReEvGAQPn9uO1U5MJN9QtixbvUo0RxPC3g5ZghL4TEJY6MHlLxjrp0CFRS61NdHXIXyHsoZAVC
+ZEkl0m1yFOfHZdLBQZL/RuOPyEMPt6Wc9PjWxi9ddXdY584Dc3CNwPQpyA+3D4zyeGXEmWDtPfO7
+6X+4tv0r4tVUHGyJWl5fXz0RXpgevejnrdpKbXNDevBSXTMl1BWKJZ1+iRMavld1dWhc3O4DvBUx
+Pud/wnBQvBL9yee160QkjBnyfOOW9lV44+uUHh9hxxPBMZ6N8GwUX/Qqal3R6g21VGrmSnqxSFfN
+zAnkpEt8Kjrr7g5oemSV/B/DTQn3gWBdhHDd4oluC+Glu/cN9Vb9j4orFscQVDg2KAl/lPKYcr+y
+2O9rdnh6k3JiftThyncGoWAQi/xZuKZQJwvkyaFenYbS/ZBLfFn47UCJ3t4PFT7ElCKeEK4I445q
+EkZ1oEmqvaqrb8I1BXmL4GFxN4QbdFqEDh+Ff7GcubZMr7jTxgPNhne5DrEz8yOXu9UnbNDQfSKa
+gRa2E3uFcI4i10AzI6F9aurvjiqVF7lba9rqQBzEa0xKi4xz05PJM7Fw13R9y035xb846tMD7fJt
+IMYL51ulZfi1VaPSoGUFzSqg5A1oW5ozmKDBBalgjEnE+RExOtsjD+0+C4tv6/b1J8ooq87jb6+f
+EmBhkgKHD1f3eub9PR/D0Ghwwpx5JzE+EUTnE6vDx1/4BRDwgSG6viycT9KVivrJ/2SWH5Y31ur1
++r5sirBXjxPMgsYBk9MhfBH/8d+nWx8zLy1KX/4p/+xxpVhU0IZnX2ufIZAyP2bmTN1y7ETs/MXk
+patm4aDTHQAf7eKr5vtLpcyrhiQpaNg0xBr7bojZ0YWFZuGmpkP4gPlH7wrkJ/DtI0GyvkLfkee1
+zGYDvZzwgea+O63/DVudJcYnQ3NHIpevpsAy9rHenUge3C1BxJ48KpvNrqpmu40fkohZvX/QXwO9
+tdATCYbonQseKYeuTVrQpwYc9M3tItr55LaaVlu0/Q6QpVPQfCw1yqPNz8VLAjilWyuk/q19oH0e
+PSyvPKuirwA6hgEyAxDtKzkz/TeGhoMSi7Hjk8GZw5HTC4mz5/oERv2hscQvu9lA/5blbyv4Bzr9
+VKuqIhtvf08BIIKGUCabpHh0FYPsoKMPOoz50Ud+oWnPBYCePamgmZhlyBpouyfrmvoW8ZFldCAm
+oRA60nHwU2B9IDiDtlobGBoLIzReAPs8vFfeWK+j8Q26rVUq2k6/SjiNZiO+71LirHZhDL5Uxgsm
+vKlKxBSXGjG1Cbr14L/DOfpDQmNnSECDBi/AyGziiA4nJRUeNjo4ojkQuAlCZzZu3FPdZGEBKwPu
+2GmDycTjZmdHNHhCA5r0uKlN0JrPj9T0oNkDaOyzA5H11RpaeGQzzWymUSqqaOtoKm/0utxhKA3d
+P+EK6GajS5RfWr0u3RvE4c3CjvkD9AXahYAj0PfS7EvIoXcjE4mwcOrBHegkl0hyMMNQImgy94Zw
+9Pdr9nABONnb22ZLVOgmNH1EBx1FNdCaDDwFAYTHBNk0G6Na3T9pswuI2QcN6QCri+yu1sC/gYgg
+8qNpszEqlAg6pO7hPj2ezh7z+oCbRTNIoKaoOk4O1MAg1gTooYe+upAUSOJwmmLAjXiQ77FAvfmG
+3p4ZvCoXb8/uvtedHEDTFf4DaA6gGVw2/x+mbr7tw+U4swAAAABJRU5ErkJggg==
 __EOF__
 
 cat >"${DESTDIR}/moltengamepad.sh" <<__EOF__
 #!/bin/sh
-exec ./moltengamepad --mimic-xpad
+nohup ./moltengamepad -d --mimic-xpad --load-root-plugins > /dev/null 2>&1
 __EOF__
 
+chmod +x "${DESTDIR}/moltengamepad.sh"
+
+#
+# Compress files
+#
 name=$(basename ${DESTDIR})
 pushd "$(dirname ${DESTDIR})"
 tar zcvf $name.tgz $name || exit 3
